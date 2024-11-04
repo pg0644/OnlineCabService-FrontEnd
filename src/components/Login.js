@@ -7,6 +7,8 @@ import Input from "react-validation/build/input";
 import CheckButton from "react-validation/build/button";
 
 import { login } from "../actions/auth";
+import { logout } from "../actions/auth";
+
 
 const required = (value) => {
   if (!value) {
@@ -27,6 +29,7 @@ const Login = (props) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState("");
 
   const { isLoggedIn } = useSelector(state => state.auth);
   const { message } = useSelector(state => state.message);
@@ -43,6 +46,11 @@ const Login = (props) => {
     setPassword(password);
   };
 
+  const onChangeRole = (e) => {
+    const role = e.target.value;
+    setRole(role);
+  };
+
   const handleLogin = (e) => {
     e.preventDefault();
 
@@ -51,7 +59,7 @@ const Login = (props) => {
     form.current.validateAll();
 
     if (checkBtn.current.context._errors.length === 0) {
-      dispatch(login(username, password))
+      dispatch(login(username, password,role))
         .then(() => {
           navigate("/profile");
           window.location.reload();
@@ -64,9 +72,30 @@ const Login = (props) => {
     }
   };
 
+  const handleLogout = (e) => {
+    e.preventDefault();
+
+    setLoading(true);
+
+    form.current.validateAll();
+
+    if (checkBtn.current.context._errors.length === 0) {
+      dispatch(logout())
+        .then(() => {
+          navigate("/");
+          window.location.reload();
+        })
+        .catch(() => {
+          setLoading(false);
+        });
+    } else {
+      setLoading(false);
+    }
+  };
+
   if (isLoggedIn) {
     // TODO: Navigate to your user screen
-    return <Navigate to="/profile" />;
+    return <Navigate to="/customers" />;
   }
 
   return (
@@ -100,6 +129,17 @@ const Login = (props) => {
               value={password}
               onChange={onChangePassword}
               validations={[required]}
+            />
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="role">Role</label>
+            <Input
+              type="text"
+              className="form-control"
+              name="role"
+              value={role}
+              onChange={onChangeRole}
             />
           </div>
 

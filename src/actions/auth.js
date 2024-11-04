@@ -45,14 +45,17 @@ export const register = (username, email, password) => (dispatch) => {
   );
 };
 
-export const login = (username, password) => (dispatch) => {
-  return AuthService.login(username, password).then(
+export const login = (username, password,role) => (dispatch) => {
+  return AuthService.login(username, password,role).then(
     (data) => {
       dispatch({
         type: LOGIN_SUCCESS,
         payload: { user: data },
       });
-
+      localStorage.setItem("currUserId", data.currUserId);
+      localStorage.setItem("uuid", data.uuid);
+      localStorage.setItem("currRole", data.currRole);
+      localStorage.setItem("currStatus", data.currStatus);
       return Promise.resolve();
     },
     (error) => {
@@ -77,10 +80,45 @@ export const login = (username, password) => (dispatch) => {
   );
 };
 
-export const logout = () => (dispatch) => {
-  AuthService.logout();
+//export const logout = () => (dispatch) => {
+ // AuthService.logout();
 
-  dispatch({
-    type: LOGOUT,
-  });
+  //dispatch({
+    //type: LOGOUT,
+ // });
+//};
+
+
+export const logout = (uuid) => (dispatch) => {
+  return AuthService.logout(uuid)
+    .then((response) => {
+      // Dispatch the LOGOUT action on successful logout
+      dispatch({
+        type: LOGOUT,
+      });
+
+      // Optionally clear local storage or any other necessary cleanup
+      localStorage.removeItem("currUserId");
+      localStorage.removeItem("uuid");
+      localStorage.removeItem("currRole");
+      localStorage.removeItem("currStatus");
+
+      return Promise.resolve(response.data); // Return response data if needed
+    })
+    .catch((error) => {
+      // Handle any errors that might occur
+      const message =
+        (error.response &&
+          error.response.data &&
+          error.response.data.message) ||
+        error.message ||
+        error.toString();
+
+      dispatch({
+        type: SET_MESSAGE,
+        payload: message,
+      });
+
+      return Promise.reject(); // Return promise reject on error
+    });
 };

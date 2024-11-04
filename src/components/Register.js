@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef,useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 
 import Form from "react-validation/build/form";
@@ -7,7 +7,27 @@ import CheckButton from "react-validation/build/button";
 import { isEmail } from "validator";
 
 import { register } from "../actions/auth";
+import CustomerService from '../services/CustomerService';
 
+function Register() {
+  const [customers, setCustomers] = useState([]);
+  const [form, setForm] = useState({
+    customerId: '',
+    userName: '',
+    email: '',
+    address: '',
+    mobileNumber: '',
+    password: '',
+    userRole: ''
+  });
+
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+// Existing validation functions...
 const required = (value) => {
   if (!value) {
     return (
@@ -28,137 +48,44 @@ const validEmail = (value) => {
   }
 };
 
-const vusername = (value) => {
-  if (value.length < 3 || value.length > 20) {
+// Additional validation functions
+const validMobileNumber = (value) => {
+  if (!/^[0-9]{10}$/.test(value)) {
     return (
       <div className="alert alert-danger" role="alert">
-        The username must be between 3 and 20 characters.
+        Please enter a valid 10-digit mobile number.
       </div>
     );
   }
 };
 
-const vpassword = (value) => {
-  if (value.length < 6 || value.length > 40) {
-    return (
-      <div className="alert alert-danger" role="alert">
-        The password must be between 6 and 40 characters.
-      </div>
-    );
-  }
-};
-
-const Register = () => {
-  const form = useRef();
-  const checkBtn = useRef();
-
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [successful, setSuccessful] = useState(false);
-
-  const { message } = useSelector(state => state.message);
-  const dispatch = useDispatch();
-
-  const onChangeUsername = (e) => {
-    const username = e.target.value;
-    setUsername(username);
+  const handleRegister = () => {
+    CustomerService.registerCustomer(form)
+      .then((response) => {
+        setCustomers([...customers, response.data]);
+        setForm({ customerId: '', userName: '', email: '', address: '', mobileNumber: '', password: '', userRole: '' });
+      })
+      .catch((error) => console.error('Error registering customer', error));
   };
-
-  const onChangeEmail = (e) => {
-    const email = e.target.value;
-    setEmail(email);
-  };
-
-  const onChangePassword = (e) => {
-    const password = e.target.value;
-    setPassword(password);
-  };
-
-  const handleRegister = (e) => {
-    e.preventDefault();
-
-    setSuccessful(false);
-
-    form.current.validateAll();
-
-    if (checkBtn.current.context._errors.length === 0) {
-      dispatch(register(username, email, password))
-        .then(() => {
-          setSuccessful(true);
-        })
-        .catch(() => {
-          setSuccessful(false);
-        });
-    }
-  };
-
+  
   return (
-    <div className="col-md-12">
-      <div className="card card-container">
-        <img
-          src="//ssl.gstatic.com/accounts/ui/avatar_2x.png"
-          alt="profile-img"
-          className="profile-img-card"
-        />
+    <div>
 
-        <Form onSubmit={handleRegister} ref={form}>
-          {!successful && (
-            <div>
-              <div className="form-group">
-                <label htmlFor="username">Username</label>
-                <Input
-                  type="text"
-                  className="form-control"
-                  name="username"
-                  value={username}
-                  onChange={onChangeUsername}
-                  validations={[required, vusername]}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="email">Email</label>
-                <Input
-                  type="text"
-                  className="form-control"
-                  name="email"
-                  value={email}
-                  onChange={onChangeEmail}
-                  validations={[required, validEmail]}
-                />
-              </div>
-
-              <div className="form-group">
-                <label htmlFor="password">Password</label>
-                <Input
-                  type="password"
-                  className="form-control"
-                  name="password"
-                  value={password}
-                  onChange={onChangePassword}
-                  validations={[required, vpassword]}
-                />
-              </div>
-
-              <div className="form-group">
-                <button className="btn btn-primary btn-block">Sign Up</button>
-              </div>
-            </div>
-          )}
-
-          {message && (
-            <div className="form-group">
-              <div className={ successful ? "alert alert-success" : "alert alert-danger" } role="alert">
-                {message}
-              </div>
-            </div>
-          )}
-          <CheckButton style={{ display: "none" }} ref={checkBtn} />
-        </Form>
+      <div>
+        <input type="text" name="userName" placeholder="Username" value={form.userName} onChange={handleInputChange} />
+        <input type="text" name="email" placeholder="Email" value={form.email} onChange={handleInputChange} />
+        <input type="text" name="address" placeholder="Address" value={form.address} onChange={handleInputChange} />
+        <input type="text" name="mobileNumber" placeholder="Mobile Number" value={form.mobileNumber} onChange={handleInputChange} />
+        <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleInputChange} />
+        <input type="userRole" name="userRole" placeholder="userRole" value={form.userRole} onChange={handleInputChange} />
+        <button onClick={handleRegister}>Register</button>
       </div>
+
+
     </div>
   );
-};
+
+}
+
 
 export default Register;
