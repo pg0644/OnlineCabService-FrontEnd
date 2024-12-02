@@ -1,7 +1,4 @@
-// src/component/CustomerDashboard.js
-
 import React, { useState, useEffect } from 'react';
-import CustomerService from '../services/CustomerService';
 import {
   searchCabsByLocation,
   requestTripBooking,
@@ -10,19 +7,7 @@ import {
   markTripAsCompleted
 } from '../services/TripService';
 
-function CustomerDashboard() {
-    const [customers, setCustomers] = useState([]);
-
-  const [form, setForm] = useState({
-    customerId: '',
-    userName: '',
-    email: '',
-    address: '',
-    mobileNumber: '',
-    password: '',
-    userRole: ''
-  });
-  const custId = localStorage.getItem("currUserId");
+const TripComponent = () => {
   const [pickUpLocation, setPickUpLocation] = useState('');
   const [tripBooking, setTripBooking] = useState({
     pickupLocation: '',
@@ -42,36 +27,7 @@ function CustomerDashboard() {
   const [tripBookingId, setTripBookingId] = useState(null);
   const [isfetchCabsByLocationExecuted, setIsfetchCabsByLocationExecuted] = useState(false);
   
-  useEffect(() => {
-    handleViewTrips();
-}, []);  
 
-
-const handleViewTrips = async () => {
-  //get customer object from his id;
-  const response = await CustomerService.viewCustomerById(custId,uuid);
-  const currg = response.data;
-  return (
-    <div>
-      <ul>
-        <li>currg.userName</li>
-        <li>currg.email</li>
-      </ul>
-    </div>
-  );
-  //get trip object from customer.getTrips(0);
-
-
-  // if(trips){
-  //   alert('Trip entered successfully');
-
-  //   const curTrip = trips.get(0);
-  //   if(curTrip.currStatus.equalsIgnoreCase("confirmed")){
-  //     const data=viewTripBookingById(curTrip.tripBookingId,uuid);
-  //     setTripDetails(data);
-  //   }
-  // }
-};
 
   // Search for available cabs by location
   const fetchCabsByLocation = async (pickUpLocation,uuid) => {
@@ -109,35 +65,40 @@ const handleViewTrips = async () => {
   // View the trip booking details by tripBookingId
   const fetchTripBookingDetails = async () => {
     try {
-     const data = await viewTripBookingById(currentTrip.tripBookingId, uuid);
-    // const data = await viewTripBookingById(4, uuid);
+      const data = await viewTripBookingById(currentTrip.tripBookingId, uuid);
       setTripDetails(data);
     } catch (err) {
       setError('Error fetching trip booking details');
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+  // Assign driver to the trip
+  const handleAssignDriver = async () => {
+    try {
+      const data = await assignDriverToTrip(currentTrip.tripBookingId, uuid);
+      setTripDetails(data);
+      setMsg("Trip in progress...");
+      alert('Driver assigned successfully');
+    } catch (err) {
+      setError('Error assigning driver');
+    }
   };
 
-  const handleUpdate = () => {
-    CustomerService.updateCustomer(form, uuid)
-      .then((response) => {
-        alert('Customer updated successfully');
-        setForm(response.data);
-      })
-      .catch((error) => console.error('Error updating customer', error));
+  // Mark the trip as completed
+  const handleMarkTripCompleted = async () => {
+    try {
+      const data = await markTripAsCompleted(currentTrip.tripBookingId, uuid);
+      setTripDetails({ ...tripDetails, tripStatus: 'Completed' });
+      setMsg("Trip is completed. Book another ride!");
+      alert(data);
+    } catch (err) {
+      setError('Error marking trip as completed');
+    }
   };
-
-
-
 
   return (
     <div>
-    <div>
-    <h2>Manage Trip</h2>
+      <h1>Trip Management</h1>
       <br></br>
       {/* Search for cabs */}
       <input
@@ -196,28 +157,22 @@ const handleViewTrips = async () => {
           <button type="submit" >Book Trip</button>
         </form>
       )}
-      <br></br>
+  <br></br>
 
-      {
+      {/* {
         currentTrip &&(
           <div>
               <button onClick = {fetchTripBookingDetails}>view Trip</button>
           </div>  
         )
-      }
+      } */}
 
       {/* Trip booking details */}
-      {tripDetails && (
+      {currentTrip && (
         <div>
           <h2>Trip Details</h2>
-          <p>Pickup Location: {tripDetails.pickupLocation}</p>
-          <p>Drop Location: {tripDetails.dropLocation}</p>
-          <p>Driver Name: {tripDetails.driverName}</p>
-          <p>Rating For Driver : {tripDetails.rating}</p>
-          <p>Car Name : {tripDetails.carName}</p>
-          <p>Car Number: {tripDetails.carNumber}</p>
-          <p>PerKMRate: {tripDetails.perKmRate} </p>
-          <p>BookingID: {tripDetails.tripBookingId}</p>
+          <p>Pickup Location: {currentTrip.pickupLocation}</p>
+          <p>Drop Location: {currentTrip.dropLocation}</p>
         </div>
       )}
     <br></br>
@@ -226,31 +181,8 @@ const handleViewTrips = async () => {
 
       {/* Display error messages */}
       {error && <p>{error}</p>}
-    </div>      
-      <h2>Update your profile details</h2>
-        <label>Username:</label>
-        <input type="text" name="userName" value={form.userName} onChange={handleInputChange} />
-        <label>Email:</label>
-        <input type="text" name="email" value={form.email} onChange={handleInputChange} />
-        <label>Address:</label>
-        <input type="text" name="address" value={form.address} onChange={handleInputChange} />
-        <label>Mobile Number:</label>
-        <input type="text" name="mobileNumber" value={form.mobileNumber} onChange={handleInputChange} />
-        <label>Password:</label>
-        <input type="password" name="password" value={form.password} onChange={handleInputChange} />
-        <label>User Role:</label>
-        <input type="text" name="userRole" value={form.userRole} onChange={handleInputChange} />
-      <button onClick={handleUpdate}>Update</button>
-
-
-
-
-
     </div>
-    
-    
-
   );
-}
+};
 
-export default CustomerDashboard;
+export default TripComponent;

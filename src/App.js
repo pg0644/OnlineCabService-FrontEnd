@@ -10,6 +10,8 @@ import Register from "./components/Register";
 import Home from "./components/Home";
 import DriverComponent from "./components/DriverComponent";
 import CustomerComponent from './components/CustomerComponent';
+import TripComponent from "./components/TripComponent";
+import AdminComponent from './components/AdminComponent';
 
 import { useNavigate } from 'react-router-dom';
 import { logout } from "./actions/auth";
@@ -17,7 +19,8 @@ import { clearMessage } from "./actions/message";
 
 import EventBus from "./common/EventBus";
 import CustomerDashboard from "./components/CustomerDashboard";
-
+import AdminDashboard from "./components/AdminDashboard";
+import CabComponent from "./components/CabComponent";
 
 
 const App = () => {
@@ -80,7 +83,7 @@ const App = () => {
         {currentUser ? (
           <div className="navbar-nav ml-auto">
             <li className="nav-item">
-              <Link to={"/profile"} className="nav-link">
+              <Link to={"/customerprofile"} className="nav-link">
                 {currentUser.username}
               </Link>
             </li>
@@ -105,12 +108,6 @@ const App = () => {
               </Link>
             </li>            
 
-            <li className="nav-item">
-              <Link to={"/drivers"} className="nav-link">
-                Drivers
-              </Link>
-            </li>
-
           </div>
         )}
       </nav>
@@ -123,7 +120,11 @@ const App = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/drivers" element={<DriverComponent />} />
           <Route path="/customers" element={<CustomerComponent />} />
-          <Route path="/profile" element={<CustomerDashboard />} />
+          <Route path="/customerprofile" element={<CustomerDashboard />} />
+          <Route path="/adminprofile" element={<AdminDashboard />} />
+          <Route path="/cabs" element={<CabComponent />} />
+          <Route path="/trips" element={<TripComponent />} />
+          <Route path="/admin" element={<AdminComponent />} />
         </Routes>
       </div>
     </div>

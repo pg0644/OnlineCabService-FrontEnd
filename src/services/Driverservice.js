@@ -1,7 +1,7 @@
 // src/service/DriverService.js
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8088/driver";
+const BASE_URL = "http://localhost:8080/driver";
 
 const Driverservice = {
     registerDriver: async (driver) => {

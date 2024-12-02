@@ -61,7 +61,12 @@ const Login = (props) => {
     if (checkBtn.current.context._errors.length === 0) {
       dispatch(login(username, password,role))
         .then(() => {
-          navigate("/profile");
+          if(role=="admin"){
+            navigate("/adminprofile");
+          }
+          else if (role=="customer"){
+            navigate("/customerprofile")
+          }
           window.location.reload();
         })
         .catch(() => {
@@ -71,6 +76,7 @@ const Login = (props) => {
       setLoading(false);
     }
   };
+
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -95,7 +101,12 @@ const Login = (props) => {
 
   if (isLoggedIn) {
     // TODO: Navigate to your user screen
-    return <Navigate to="/customers" />;
+    if(role=="admin"){
+      return <Navigate to="/adminprofile" />;
+    }
+    else if (role=="customer"){
+      return <Navigate to="/profile" />;
+    }
   }
 
   return (

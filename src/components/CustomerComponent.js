@@ -1,91 +1,228 @@
-// src/component/Customer.js
-
-import React, { useState, useEffect } from 'react';
-import CustomerService from '../services/CustomerService';
-
-function Customer() {
-  const [customers, setCustomers] = useState([]);
-  const [form, setForm] = useState({
-    customerId: '',
-    userName: '',
-    email: '',
-    address: '',
-    mobileNumber: '',
-    password: '',
+// CustomerComponent.js
+import React, { useState, useEffect } from "react";
+import CustomerService from "../services/CustomerService";
+import AdminService from "../services/AdminService";
+const CustomerComponent = () => {
+  const [customer, setCustomer] = useState({
+    userName: "",
+    email: "",
+    password: "",
+    mobileNumber: "",
+    address: "",
+    userRole: "Customer",
   });
-  const [uuid, setUuid] = useState('');
 
+  const [customerList, setCustomerList] = useState([]);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [uuid, setUuid] = useState(localStorage.getItem("uuid"));
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [tripHistory, setTripHistory] = useState([]);
+
+  
+
+  // Get all customers when the component mounts
   useEffect(() => {
-    if (uuid) fetchAllCustomers();
+    if (uuid) {
+      CustomerService.viewCustomer(uuid)
+        .then((response) => {
+          console.log("Customer List:", response.data);
+          setCustomerList(response.data);
+        })
+        .catch((error) => {
+          console.error("Error fetching customers:", error);
+          setErrorMessage(error.response.data.message);
+        });
+    }
   }, [uuid]);
 
-  const fetchAllCustomers = () => {
-    CustomerService.viewAllCustomers(uuid)
-      .then((response) => setCustomers(response.data))
-      .catch((error) => console.error('Error fetching customers', error));
-  };
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-  };
-
-  const handleRegister = () => {
-    CustomerService.registerCustomer(form)
+  const handleRegisterCustomer = (e) => {
+    e.preventDefault();
+    CustomerService.registerCustomer(customer)
       .then((response) => {
-        setCustomers([...customers, response.data]);
-        setForm({ customerId: '', userName: '', email: '', address: '', mobileNumber: '', password: '' });
+        alert("Customer registered successfully!");
       })
-      .catch((error) => console.error('Error registering customer', error));
+      .catch((error) => {
+        setErrorMessage(error.response.data.message);
+      });
   };
 
-  const handleUpdate = () => {
-    CustomerService.updateCustomer(form, localStorage.getItem("uuid"))
-      .then((response) => {
-        setCustomers(customers.map((cust) => (cust.customerId === response.data.customerId ? response.data : cust)));
-        setForm({ customerId: '', userName: '', email: '', address: '', mobileNumber: '', password: '', userRole: '' });
-      })
-      .catch((error) => console.error('Error updating customer', error));
+  const handleUpdateCustomer = (e) => {
+    e.preventDefault();
+    if (selectedCustomer) {
+      CustomerService.updateCustomer(selectedCustomer, uuid)
+        .then((response) => {
+          alert("Customer updated successfully!");
+        })
+        .catch((error) => {
+          setErrorMessage(error.response.data.message);
+        });
+    }
   };
 
-  const handleDelete = (customerId) => {
+  const handleDeleteCustomer = (customerId) => {
     CustomerService.deleteCustomer(customerId, uuid)
-      .then(() => setCustomers(customers.filter((cust) => cust.customerId !== customerId)))
-      .catch((error) => console.error('Error deleting customer', error));
+      .then((response) => {
+        alert("Customer deleted successfully!");
+        setCustomerList(customerList.filter(cust => cust.id !== customerId)); // Remove from list
+      })
+      .catch((error) => {
+        setErrorMessage(error.response.data.message);
+      });
   };
 
-  const handleView = (customerId) => {
-    CustomerService.viewCustomer(customerId, localStorage.getItem("uuid"))
-      .then((response) => setForm(response.data))
-      .catch((error) => console.error('Error viewing customer', error));
+  const handleSelectCustomer = (customer) => {
+    setSelectedCustomer(customer);
+  };
+
+  const handleTripHistory = (customerId) => {
+    AdminService.getTripsCustomerwise(customerId, uuid)
+    .then((response) => {
+      if (response.data && response.data.length > 0) {
+        console.log("Trip History:", response.data);
+        setTripHistory(response.data); 
+      } else {
+        console.log("No trips available for this customer.");
+        setTripHistory([]);
+      }
+    })
+      .catch((error) => {
+        setTripHistory([]);
+      });
   };
 
   return (
     <div>
       <h2>Customer Dashboard</h2>
+      <br></br>
       <div>
-        <input type="text" name="userName" placeholder="Username" value={form.userName} onChange={handleInputChange} />
-        <input type="text" name="email" placeholder="Email" value={form.email} onChange={handleInputChange} />
-        <input type="text" name="address" placeholder="Address" value={form.address} onChange={handleInputChange} />
-        <input type="text" name="mobileNumber" placeholder="Mobile Number" value={form.mobileNumber} onChange={handleInputChange} />
-        <input type="password" name="password" placeholder="Password" value={form.password} onChange={handleInputChange} />
-        <button onClick={handleRegister}>Register</button>
-        <button onClick={handleUpdate}>Update</button>
+        <h3>Register New Customer</h3>
+        <form onSubmit={handleRegisterCustomer}>
+          <input
+            type="text"
+            name="userName"
+            placeholder="User Name"
+            value={customer.userName}
+            onChange={(e) => setCustomer({ ...customer, userName: e.target.value })}
+          />
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={customer.email}
+            onChange={(e) => setCustomer({ ...customer, email: e.target.value })}
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={customer.password}
+            onChange={(e) => setCustomer({ ...customer, password: e.target.value })}
+          />
+          <input
+            type="text"
+            name="mobileNumber"
+            placeholder="Mobile Number"
+            value={customer.mobileNumber}
+            onChange={(e) => setCustomer({ ...customer, mobileNumber: e.target.value })}
+          />
+          <input
+            type="text"
+            name="address"
+            placeholder="Address"
+            value={customer.address}
+            onChange={(e) => setCustomer({ ...customer, address: e.target.value })}
+          />
+          <button type="submit">Register</button>
+        </form>
       </div>
-      <div>
-      </div>
-      <h3>Your List</h3>
-      <ul>
-        {customers.map((customer) => (
-          <li key={customer.customerId}>
-            {customer.userName} - {customer.email}
-            <button onClick={() => handleView(customer.customerId)}>View</button>
-            <button onClick={() => handleDelete(customer.customerId)}>Delete</button>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
+      <br></br>
+      <br></br>
 
-export default Customer;
+      <br></br>
+      <br></br>
+
+      <div>
+        <h3> Manage Customers </h3>
+        <ul>
+          {customerList.map((customer) => (
+            <li key={customer.id}>
+              {customer.userName} ({customer.email})
+              <button onClick={() => handleSelectCustomer(customer)}>View</button>
+              <button onClick={() => {handleDeleteCustomer(customer.customerId)}}>Delete</button>
+              <button onClick={() => handleTripHistory(customer.customerId)}>Trip History</button>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <br></br>
+
+      <div>
+        <h3>Update details here:</h3>
+        {selectedCustomer && (
+          <form onSubmit={handleUpdateCustomer}>
+            <input
+              type="text"
+              name="userName"
+              placeholder="User Name"
+              value={selectedCustomer.userName}
+              onChange={(e) => setSelectedCustomer({ ...selectedCustomer, userName: e.target.value })}
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={selectedCustomer.email}
+              onChange={(e) => setSelectedCustomer({ ...selectedCustomer, email: e.target.value })}
+            />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={selectedCustomer.password}
+            onChange={(e) => setSelectedCustomer({ ...selectedCustomer, password: e.target.value })}
+          />
+          <input
+            type="text"
+            name="mobileNumber"
+            placeholder="Mobile Number"
+            value={selectedCustomer.mobileNumber}
+            onChange={(e) => setSelectedCustomer({ ...selectedCustomer, mobileNumber: e.target.value })}
+          />
+          <input
+            type="text"
+            name="address"
+            placeholder="Address"
+            value={selectedCustomer.address}
+            onChange={(e) => setSelectedCustomer({ ...selectedCustomer, address: e.target.value })}
+          />                        
+            <button type="submit">Update</button>
+          </form>
+        )}
+      </div>
+      <br></br>     
+
+      <div>
+      <h3> Trip History </h3>
+      {tripHistory.length > 0 ? (
+        <ul>
+          {tripHistory.map((trip) => (
+            <li>
+              <p>BookingId: {trip.tripBookingId}</p>
+              <p>Pickup: {trip.pickupLocation}</p>
+              <p>destination: {trip.dropLocation}</p>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p>No trip history available for this customer.</p>
+      )}
+      </div>
+
+      {errorMessage && <div className="error">{errorMessage}</div>}
+    </div>
+    
+  );
+};
+
+export default CustomerComponent;
